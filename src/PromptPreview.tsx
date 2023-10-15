@@ -1,18 +1,6 @@
 import { Box, Button, TextField, Modal } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
-
-export const extractVariables = (prompt: string): { [key: string]: string } => {
-  const regex = /{{([^{}]+)}}/g;
-  const matches = prompt.match(regex) || [];
-  const keys = matches.map((match) => match.slice(2, -2).trim());
-  const variables: { [key: string]: string } = {};
-  keys.map((key) => {
-    if (key) {
-      variables[key] = "";
-    }
-  });
-  return variables;
-};
+import { extractVariables, renderTemplate } from "./templateEngine";
 
 export const PromptPreview = ({
   open,
@@ -38,9 +26,7 @@ export const PromptPreview = ({
   }, [extractVariablesCallback]);
 
   const render = useCallback(() => {
-    return prompt.replace(/{{(.*?)}}/g, (match, key) => {
-      return variables[key] || match;
-    });
+    return renderTemplate(prompt, variables);
   }, [prompt, variables]);
 
   useEffect(() => {
@@ -62,52 +48,61 @@ export const PromptPreview = ({
           boxShadow: 24,
           p: 4,
         }}
-        display={"flex"}
-        flexDirection={"column"}
       >
-        <Box display={"flex"} flexGrow={1}>
-          <Box
-            flexGrow={1.5}
-            sx={{ whiteSpace: "pre-line" }}
-            flexDirection={"column"}
+        <Box display={"flex"} flexDirection={"column"} height={"100%"}>
+          <Box display={"flex"} flexGrow={1} height={"90%"}>
+            <Box flexGrow={1} flexDirection={"column"} width={0.5}>
+              <Box>[preview]</Box>
+              <Box
+                textAlign={"left"}
+                sx={{ overflowY: "auto", height: 0.9, whiteSpace: "pre-line" }}
+              >
+                {previewPrompt}
+              </Box>
+            </Box>
+            <Box
+              flexGrow={1}
+              display={"flex"}
+              flexDirection={"column"}
+              width={0.5}
+              marginLeft={2}
+            >
+              <Box>[変数]</Box>
+              <Box sx={{ overflowY: "auto", height: 0.9 }}>
+                {Object.entries(variables).map(([key, value]) => {
+                  return (
+                    <>
+                      <TextField
+                        key={key}
+                        label={key}
+                        value={value}
+                        onChange={(e) =>
+                          setVariables({
+                            ...variables,
+                            [key]: e.target.value,
+                          })
+                        }
+                        sx={{ m: 1, width: 0.9 }}
+                        multiline
+                        maxRows={3}
+                      />
+                    </>
+                  );
+                })}
+              </Box>
+            </Box>
+          </Box>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => {
+              setOpen(false);
+              setRenderedPrompt(previewPrompt);
+            }}
           >
-            <Box>[プレビュー]</Box>
-            <Box textAlign={"left"}>{previewPrompt}</Box>
-          </Box>
-          <Box flexGrow={1} display={"flex"} flexDirection={"column"}>
-            <Box>[変数]</Box>
-            {Object.entries(variables).map(([key, value]) => {
-              return (
-                <>
-                  <TextField
-                    key={key}
-                    label={key}
-                    value={value}
-                    onChange={(e) =>
-                      setVariables({
-                        ...variables,
-                        [key]: e.target.value,
-                      })
-                    }
-                    sx={{ m: 1 }}
-                    multiline
-                    maxRows={3}
-                  />
-                </>
-              );
-            })}
-          </Box>
+            Submit
+          </Button>
         </Box>
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={() => {
-            setOpen(false);
-            setRenderedPrompt(previewPrompt);
-          }}
-        >
-          Submit
-        </Button>
       </Box>
     </Modal>
   );

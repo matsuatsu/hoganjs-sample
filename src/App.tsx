@@ -1,17 +1,23 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import "./App.css";
 import { Box, Button, TextField, Divider, Chip } from "@mui/material";
-import { PromptPreview, extractVariables } from "./PromptPreview";
+import { PromptPreview } from "./PromptPreview";
+import { extractVariables } from "./templateEngine";
 
 function App() {
   const [prompt, setPrompt] = useState("");
   const [renderedPrompt, setRenderedPrompt] = useState("");
   const [open, setOpen] = useState(false);
 
+  const [variables, setVariables] = useState({});
+
   const extractVariablesCallback = useCallback(() => {
-    const variables = extractVariables(prompt);
-    return variables;
+    return extractVariables(prompt);
   }, [prompt]);
+
+  useEffect(() => {
+    setVariables(extractVariablesCallback());
+  }, [extractVariablesCallback]);
 
   return (
     <>
@@ -26,7 +32,7 @@ function App() {
         />
         <Box textAlign={"left"}>
           変数：
-          {Object.keys(extractVariables(prompt)).map((key) => {
+          {Object.keys(variables).map((key) => {
             return <Chip sx={{ m: 1 }} label={key} variant="outlined" />;
           })}
         </Box>
@@ -34,7 +40,6 @@ function App() {
           fullWidth
           variant="contained"
           onClick={() => {
-            const variables = extractVariablesCallback();
             if (Object.keys(variables).length == 0) {
               setRenderedPrompt(prompt);
             } else {
