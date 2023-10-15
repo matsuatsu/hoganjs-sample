@@ -1,74 +1,64 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import "./App.css";
-import { Box, TextField, Divider, Typography } from "@mui/material";
-import Hogan from "hogan.js";
+import { Box, Button, TextField, Divider } from "@mui/material";
+import { PromptPreview } from "./PromptPreview";
 
 function App() {
   const [prompt, setPrompt] = useState("");
-  const [args, setArgs] = useState<{ [key: string]: string }>({});
-  const [renderedPrompt, setRenderesPrompt] = useState("");
+  const [renderedPrompt, setRenderedPrompt] = useState("");
+  const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (prompt.endsWith("{{")) {
-      setPrompt(prompt + " arg }}");
-    }
-    const tree = Hogan.parse(Hogan.scan(prompt));
-    const keys = tree.filter((t) => t.tag == "_v").map((t) => t.n);
-    const newArgs: { [key: string]: string } = {};
+  const extractVariables = useCallback(() => {
+    const regex = /{{([^{}]+)}}/g;
+    const matches = prompt.match(regex) || [];
+    const keys = matches.map((match) => match.slice(2, -2).trim());
+    const variables: { [key: string]: string } = {};
     keys.map((key) => {
       if (key) {
-        newArgs[key] = "";
+        variables[key] = "";
       }
     });
-    setArgs(newArgs);
+    return variables;
   }, [prompt]);
 
-  useEffect(() => {
-    const template = Hogan.compile(prompt);
-    const newArgs = { ...args };
-    Object.keys(args).map((key) => {
-      if (args[key] == "") {
-        newArgs[key] = `{{${key}}}`;
-      }
-    });
-    const rendered = template.render(newArgs);
-    setRenderesPrompt(rendered);
-  }, [args]);
-
-  console.log(args);
-
   return (
-    <Box width={"100%"}>
-      <TextField
-        label="template"
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        multiline
-        rows={5}
-        fullWidth
-      />
-      <Divider sx={{ m: 2 }}></Divider>
-      <Box display={"flex"}>
-        <Box flexGrow={1} sx={{ whiteSpace: "pre-line" }} textAlign={"left"}>
+    <>
+      <Box width={"100%"}>
+        <TextField
+          label="prompt"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          multiline
+          rows={5}
+          fullWidth
+        />
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={() => {
+            const variables = extractVariables();
+            if (Object.keys(variables).length == 0) {
+              setRenderedPrompt(prompt);
+            } else {
+              setOpen(true);
+            }
+          }}
+          sx={{ m: 2 }}
+        >
+          Submit
+        </Button>
+        <Divider sx={{ m: 2 }}></Divider>
+        <Box sx={{ whiteSpace: "pre-line" }} textAlign={"left"}>
           {renderedPrompt}
         </Box>
-        <Box flexGrow={1} display={"flex"} flexDirection={"column"}>
-          <Box>[変数]</Box>
-          {Object.entries(args).map(([key, value]) => {
-            return (
-              <>
-                <TextField
-                  label={key}
-                  value={value}
-                  onChange={(e) => setArgs({ ...args, [key]: e.target.value })}
-                  sx={{ m: 1 }}
-                />
-              </>
-            );
-          })}
-        </Box>
       </Box>
-    </Box>
+      <PromptPreview
+        open={open}
+        setOpen={setOpen}
+        prompt={prompt}
+        setRenderedPrompt={setRenderedPrompt}
+      />
+    </>
   );
 }
 
