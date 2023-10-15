@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import "./App.css";
-import { Box, Button, TextField, Divider } from "@mui/material";
+import { Box, Button, TextField, Divider, Chip } from "@mui/material";
 import { PromptPreview, extractVariables } from "./PromptPreview";
 
 function App() {
@@ -24,6 +24,12 @@ function App() {
           rows={5}
           fullWidth
         />
+        <Box textAlign={"left"}>
+          変数：
+          {Object.keys(extractVariables(prompt)).map((key) => {
+            return <Chip sx={{ m: 1 }} label={key} variant="outlined" />;
+          })}
+        </Box>
         <Button
           fullWidth
           variant="contained"

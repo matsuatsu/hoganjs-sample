@@ -1,7 +1,7 @@
 import { Box, Button, TextField, Modal } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 
-export const extractVariables = (prompt: string) => {
+export const extractVariables = (prompt: string): { [key: string]: string } => {
   const regex = /{{([^{}]+)}}/g;
   const matches = prompt.match(regex) || [];
   const keys = matches.map((match) => match.slice(2, -2).trim());
