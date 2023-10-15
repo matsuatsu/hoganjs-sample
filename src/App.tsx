@@ -1,23 +1,15 @@
 import { useState, useCallback } from "react";
 import "./App.css";
 import { Box, Button, TextField, Divider } from "@mui/material";
-import { PromptPreview } from "./PromptPreview";
+import { PromptPreview, extractVariables } from "./PromptPreview";
 
 function App() {
   const [prompt, setPrompt] = useState("");
   const [renderedPrompt, setRenderedPrompt] = useState("");
   const [open, setOpen] = useState(false);
 
-  const extractVariables = useCallback(() => {
-    const regex = /{{([^{}]+)}}/g;
-    const matches = prompt.match(regex) || [];
-    const keys = matches.map((match) => match.slice(2, -2).trim());
-    const variables: { [key: string]: string } = {};
-    keys.map((key) => {
-      if (key) {
-        variables[key] = "";
-      }
-    });
+  const extractVariablesCallback = useCallback(() => {
+    const variables = extractVariables(prompt);
     return variables;
   }, [prompt]);
 
@@ -36,7 +28,7 @@ function App() {
           fullWidth
           variant="contained"
           onClick={() => {
-            const variables = extractVariables();
+            const variables = extractVariablesCallback();
             if (Object.keys(variables).length == 0) {
               setRenderedPrompt(prompt);
             } else {

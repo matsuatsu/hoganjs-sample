@@ -1,6 +1,19 @@
 import { Box, Button, TextField, Modal } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 
+export const extractVariables = (prompt: string) => {
+  const regex = /{{([^{}]+)}}/g;
+  const matches = prompt.match(regex) || [];
+  const keys = matches.map((match) => match.slice(2, -2).trim());
+  const variables: { [key: string]: string } = {};
+  keys.map((key) => {
+    if (key) {
+      variables[key] = "";
+    }
+  });
+  return variables;
+};
+
 export const PromptPreview = ({
   open,
   setOpen,
@@ -15,22 +28,14 @@ export const PromptPreview = ({
   const [previewPrompt, setPreviewPrompt] = useState("");
   const [variables, setVariables] = useState<{ [key: string]: string }>({});
 
-  const extractVariables = useCallback(() => {
-    const regex = /{{([^{}]+)}}/g;
-    const matches = prompt.match(regex) || [];
-    const keys = matches.map((match) => match.slice(2, -2).trim());
-    const variables: { [key: string]: string } = {};
-    keys.map((key) => {
-      if (key) {
-        variables[key] = "";
-      }
-    });
+  const extractVariablesCallback = useCallback(() => {
+    const variables = extractVariables(prompt);
     return variables;
   }, [prompt]);
 
   useEffect(() => {
-    setVariables(extractVariables());
-  }, [extractVariables]);
+    setVariables(extractVariablesCallback());
+  }, [extractVariablesCallback]);
 
   const render = useCallback(() => {
     return prompt.replace(/{{(.*?)}}/g, (match, key) => {
